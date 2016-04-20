@@ -201,6 +201,8 @@ private:
   // sequence.
   std::stack<int> PPChainBranchIndex;
 
+  unsigned PPIndentLevel;
+
   friend class ScopedLineState;
   friend class CompoundStatementIndenter;
 };

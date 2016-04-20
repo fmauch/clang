@@ -203,7 +203,8 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          UnwrappedLineConsumer &Callback)
     : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
       CurrentLines(&Lines), Style(Style), Keywords(Keywords), Tokens(nullptr),
-      Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1) {}
+      Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1),
+      PPIndentLevel(0) {}
 
 void UnwrappedLineParser::reset() {
   PPBranchLevel = -1;
@@ -589,16 +590,24 @@ void UnwrappedLineParser::parsePPIf(bool IfDef) {
                         FormatTok->Tok.is(tok::kw_false);
   conditionalCompilationStart(!IfDef && IsLiteralFalse);
   parsePPUnknown();
+  ++PPIndentLevel;
 }
 
 void UnwrappedLineParser::parsePPElse() {
+  if (PPIndentLevel > 0) {
+    --PPIndentLevel;
+  }
   conditionalCompilationAlternative();
   parsePPUnknown();
+  ++PPIndentLevel;
 }
 
 void UnwrappedLineParser::parsePPElIf() { parsePPElse(); }
 
 void UnwrappedLineParser::parsePPEndIf() {
+  if (PPIndentLevel > 0) {
+    --PPIndentLevel;
+  }
   conditionalCompilationEnd();
   parsePPUnknown();
 }
@@ -616,8 +625,9 @@ void UnwrappedLineParser::parsePPDefine() {
           FormatTok->WhitespaceRange.getEnd()) {
     parseParens();
   }
+  Line->Level += PPIndentLevel;
   addUnwrappedLine();
-  Line->Level = 1;
+  Line->Level += 1;
 
   // Errors during a preprocessor directive can only affect the layout of the
   // preprocessor directive, and thus we ignore them. An alternative approach
@@ -631,6 +641,7 @@ void UnwrappedLineParser::parsePPUnknown() {
   do {
     nextToken();
   } while (!eof());
+  Line->Level += PPIndentLevel;
   addUnwrappedLine();
 }
 
