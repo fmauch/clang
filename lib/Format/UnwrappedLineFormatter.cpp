@@ -924,6 +924,13 @@ void UnwrappedLineFormatter::formatFirstToken(FormatToken &RootToken,
   if (RootToken.IsFirst && !RootToken.HasUnescapedNewline)
     Newlines = 0;
 
+  // Handle preprocessor lines
+  if (RootToken.is(tok::hash))
+  {
+    // A preprocessor's hash should always be at the beginning
+    Indent = 0;
+    IndentLevel = 0;
+  }
   // Remove empty lines after "{".
   if (!Style.KeepEmptyLinesAtTheStartOfBlocks && PreviousLine &&
       PreviousLine->Last->is(tok::l_brace) &&

@@ -330,10 +330,16 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   }
 
   unsigned Spaces = Current.SpacesRequiredBefore + ExtraSpaces;
+  unsigned whitespace_spaces = Spaces;
+  if (State.Line->First->is(tok::hash) && Current.Previous->is(tok::hash))
+  {
+    whitespace_spaces += State.FirstIndent;
+  } else {
+  }
 
   if (!DryRun)
     Whitespaces.replaceWhitespace(Current, /*Newlines=*/0, /*IndentLevel=*/0,
-                                  Spaces, State.Column + Spaces);
+                                  whitespace_spaces, State.Column + Spaces);
 
   if (Current.is(TT_SelectorName) &&
       !State.Stack.back().ObjCSelectorNameFound) {
